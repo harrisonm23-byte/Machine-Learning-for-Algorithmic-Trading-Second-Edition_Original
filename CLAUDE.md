@@ -7,7 +7,15 @@
   Chapter 24 does not cover candlestick patterns, so those need to be added separately.
 - Secondary interests: chapter 2 (market and fundamental data), chapter 7 (linear factor models)
   and chapter 9 (time series, volatility forecasting, pairs trading).
-- The user has their own **volatility strategy** that we may research and test.
+- The user has their own **volatility strategy**, explained in the artifact
+  https://claude.ai/artifact/VS1UEX42XB2jgZ3z1NADh3 ("Buy High, Sell Low"). The main version is
+  **short SPX options, delta-hedged with ES futures**: 30-day options at 15 delta, sold as 2 puts
+  and 1 call ("Short (put + strangle)"). Variants on the page: short strangle, iron condor (with
+  5-delta wings), long strangle, long put, long call. Its historical odds start from days when the
+  VIX is between 12 and 18. The page explains the Greeks (delta, gamma, vega, volga, vanna, gaps).
+  It does not define exit rules, re-hedge frequency or position sizing.
+- Data check: FMP serves daily `^VIX` and `^GSPC` from 2010 on this plan. `^VIX3M` and `^VIX9D`
+  are not available. FMP has no historical option chains.
 - They trade on Robinhood (charts) and have FMP and Alpaca API access.
 - Work so far: `projects/ml_long_short/` reproduces the book's chapter 4/8/12 LightGBM long-short
   workflow. On FMP data (30 large caps, 2018-2026) it showed no edge after costs. See its README.
