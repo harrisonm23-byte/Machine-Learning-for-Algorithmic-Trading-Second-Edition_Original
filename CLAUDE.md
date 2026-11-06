@@ -1,5 +1,17 @@
 # Notes for Claude
 
+## User background and focus
+
+- The user thinks mostly in terms of **technical indicators (book chapter 24, `24_alpha_factor_library`)**
+  and **candlestick dynamics and patterns**. Frame ideas and explanations in those terms first.
+  Chapter 24 does not cover candlestick patterns, so those need to be added separately.
+- Secondary interests: chapter 2 (market and fundamental data), chapter 7 (linear factor models)
+  and chapter 9 (time series, volatility forecasting, pairs trading).
+- The user has their own **volatility strategy** that we may research and test.
+- They trade on Robinhood (charts) and have FMP and Alpaca API access.
+- Work so far: `projects/ml_long_short/` reproduces the book's chapter 4/8/12 LightGBM long-short
+  workflow. On FMP data (30 large caps, 2018-2026) it showed no edge after costs. See its README.
+
 ## Reading the user's Robinhood chart screenshots
 
 The user often shares Robinhood mobile chart screenshots to show market conditions or
