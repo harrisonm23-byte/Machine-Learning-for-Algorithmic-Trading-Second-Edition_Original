@@ -64,6 +64,10 @@ def _cache_path(cache_dir: Path, source: str, tickers: Sequence[str], start, end
     return cache_dir / f"{source}_{digest}.parquet"
 
 
+class PlanRestrictedError(PermissionError):
+    """The API plan does not cover this request (HTTP 402), e.g. a premium symbol."""
+
+
 def _get_json(session, url: str, params: dict, retries: int = 4):
     """GET with exponential backoff on 429/5xx."""
     for attempt in range(retries):
@@ -73,6 +77,8 @@ def _get_json(session, url: str, params: dict, retries: int = 4):
             log.warning("HTTP %s from %s; retrying in %ss", resp.status_code, url, wait)
             time.sleep(wait)
             continue
+        if resp.status_code == 402:
+            raise PlanRestrictedError(f"HTTP 402 from {url} {params}: {resp.text[:200]}")
         if resp.status_code in (401, 403):
             raise PermissionError(
                 f"HTTP {resp.status_code} from {url}: check the API key and plan. "
@@ -100,9 +106,13 @@ def load_fmp(tickers: Iterable[str], start: str, end: str, api_key: str | None =
     session = requests.Session()
     session.headers["apikey"] = api_key  # FMP accepts the key as a header
 
-    frames = []
+    frames, restricted = [], []
     for symbol in tickers:
-        rows = _get_json(session, FMP_URL, {"symbol": symbol, "from": start, "to": end})
+        try:
+            rows = _get_json(session, FMP_URL, {"symbol": symbol, "from": start, "to": end})
+        except PlanRestrictedError:
+            restricted.append(symbol)
+            continue
         if isinstance(rows, dict):  # older payload shape / error message
             rows = rows.get("historical", [])
         if not rows:
@@ -113,6 +123,9 @@ def load_fmp(tickers: Iterable[str], start: str, end: str, api_key: str | None =
         )
         df["symbol"] = symbol
         frames.append(df.set_index(["symbol", "date"]))
+    if restricted:
+        log.warning("Skipped %d symbols not covered by your FMP plan: %s",
+                    len(restricted), ", ".join(restricted))
     if not frames:
         raise ValueError("FMP returned no data for any ticker.")
     return _finalize(pd.concat(frames))

@@ -88,6 +88,19 @@ def test_alpaca_pagination(monkeypatch):
     assert session.headers["APCA-API-KEY-ID"] == "id"
 
 
+def test_fmp_skips_symbols_outside_plan(monkeypatch, caplog):
+    def responder(url, params):
+        if params["symbol"] == "PREMIUM":
+            return FakeResponse("Premium Query Parameter", 402)
+        return FakeResponse([{"symbol": params["symbol"], "date": "2024-01-02", "adjOpen": 1,
+                              "adjHigh": 2, "adjLow": 1, "adjClose": 1.5, "volume": 5}])
+
+    install_session(monkeypatch, responder)
+    df = data.load_fmp(["AAA", "PREMIUM"], "2024-01-01", "2024-01-05", api_key="k")
+    assert df.index.get_level_values("symbol").unique().tolist() == ["AAA"]
+    assert "PREMIUM" in caplog.text
+
+
 def test_auth_error_is_explicit(monkeypatch):
     install_session(monkeypatch, lambda url, params: FakeResponse({"error": "bad key"}, 401))
     with pytest.raises(PermissionError):

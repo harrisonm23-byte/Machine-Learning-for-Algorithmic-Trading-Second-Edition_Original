@@ -34,6 +34,8 @@ importance), `predictions.parquet`, `daily_returns.csv`, `daily_ic.csv` and `fea
 | `synthetic` | none                                         | prices with a planted persistent alpha (`--signal-strength`, 0 = pure noise) |
 
 Downloads are cached as Parquet in `data_cache/`, keyed by source, tickers and dates.
+Symbols your FMP plan does not cover (HTTP 402) are skipped with a warning. On the current plan,
+20 of the 50 default tickers are skipped, which leaves 30.
 The default universe is 50 US large caps (`data.DEFAULT_TICKERS`); pass `--tickers` to override.
 
 ```bash
@@ -70,6 +72,20 @@ These checks are tested in `tests/`:
 - A perfect-foresight signal makes money only if it is traded at the same close it was
   computed from; with the default one-day lag, its edge on noise prices disappears. Random
   signals average a Sharpe of about 0 (`test_backtest.py`).
+
+## Baseline result (FMP, 2026-11-06)
+
+`--source fmp --start 2016-01-01 --end 2026-11-04 --n-long 6 --n-short 6`, 30 symbols,
+34 walk-forward folds, out of sample from 2018-04 to 2026-10:
+
+| | Annual return | Sharpe | Max drawdown |
+|---|---|---|---|
+| Long-short, net of 5 bps costs | -1.2% | 0.05 | -44% |
+| Equal-weight universe (long only) | 19.2% | 0.98 | -35% |
+
+Mean IC is 0.006, which is not distinguishable from zero. Before costs the strategy made about
+45% in total. Turnover averages 2.2 per 5-day rebalance, so costs take about 5-6% a year. In short,
+price and volume factors on 30 mega caps give no tradeable edge. It is the baseline to beat.
 
 ## Caveats before reading too much into a backtest
 
